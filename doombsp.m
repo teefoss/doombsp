@@ -1,8 +1,8 @@
 // doombsp.c
 #import "doombsp.h"
 
-id 			wad_i;
-boolean		draw;
+Wadfile *   wad_i;
+BOOL		draw;
 
 /*
 ==================
@@ -28,14 +28,19 @@ int main (int argc, char **argv)
 			Error ("doombsp [-draw] inmap outwadpath");
 		inmapname = argv[2];
 		strcpy (outmapname,argv[3]);
-		draw = true;
-		NXApp = [Application new];
+		draw = YES;
+		//NSApp = [NSApplication new];
+        if (SDL_Init(SDL_INIT_VIDEO) != 0)
+        {
+            puts("SDL_Init() failed");
+            return 1;
+        }
 	}
 	else if (argc == 3)
 	{
 		inmapname = argv[1];
 		strcpy (outmapname,argv[2]);
-		draw = false;
+		draw = NO;
 	}
 	else
 		Error ("doombsp [-draw] inmap outwadpath");

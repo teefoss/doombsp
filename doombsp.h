@@ -1,13 +1,15 @@
 // doombsp.h
 
 #import <appkit/appkit.h>
+#include <SDL2/SDL.h>
 #import <math.h>
+#include <limits.h>
 #import "cmdlib.h"
 #import "Wadfile.h"
 #include "DoomData.h"
 
-#define	SHORT(x)	NXSwapLittleShortToHost((short)x)
-#define	LONG(x)		NXSwapLittleLongToHost((long)x)
+#define	SHORT(x)	NSSwapLittleShortToHost((short)x)
+#define	LONG(x)		NSSwapLittleLongToHost((long)x)
 
 #define PI	3.141592657
 
@@ -40,7 +42,7 @@ typedef struct
 
 typedef struct
 {
-	NXPoint		p1, p2;
+	NSPoint		p1, p2;
 	int			special, tag;
 	int			flags;	
 	worldside_t	side[2];
@@ -51,7 +53,7 @@ typedef struct
 
 typedef struct
 {
-	NXPoint		origin;
+	NSPoint		origin;
 	int			angle;
 	int			type;
 	int			options;
@@ -68,7 +70,7 @@ typedef struct
 
 typedef	struct
 {
-	NXPoint	pt;
+	NSPoint	pt;
 	float	dx,dy;
 }divline_t;
 
@@ -83,9 +85,9 @@ typedef struct bspstruct_s
 
 typedef struct
 {
-	NXPoint		p1, p2;
+	NSPoint		p1, p2;
 	int			linedef, side, offset;
-	boolean		grouped;				// internal error check
+	BOOL		grouped;				// internal error check
 } line_t;
 
 
@@ -97,8 +99,8 @@ typedef struct
 ===============================================================================
 */
 
-extern	id			wad_i;
-extern	boolean		draw;
+extern	Wadfile *	wad_i;
+extern	BOOL		draw;
 
 
 /*
@@ -109,7 +111,7 @@ extern	boolean		draw;
 ===============================================================================
 */
 
-extern	id	linestore_i, thingstore_i;
+extern Storage *linestore_i, *thingstore_i;
 
 void LoadDoomMap (char *mapname);
 
@@ -122,9 +124,11 @@ void LoadDoomMap (char *mapname);
 ===============================================================================
 */
 
-extern	id 	window_i, view_i;
-extern	float	scale;
-extern	NXRect		worldbounds;
+//extern	id 	window_i, view_i;
+extern  SDL_Window *window_t; // MARK: SDL
+extern  SDL_Renderer *renderer_i;
+extern	float	    scale;
+extern	NSRect		worldbounds;
 
 void EraseWindow (void);
 void DrawMap (void);
@@ -146,7 +150,7 @@ extern	bspnode_t	*startnode;
 
 void BuildBSP (void);
 void	DivlineFromWorldline (divline_t *d, line_t *w);
-int	PointOnSide (NXPoint *p, divline_t *l);
+int	PointOnSide (NSPoint *p, divline_t *l);
 
 
 
@@ -158,14 +162,14 @@ int	PointOnSide (NXPoint *p, divline_t *l);
 ===============================================================================
 */
 
-extern	id		secstore_i;
-extern	id		mapvertexstore_i;
-extern	id		subsecstore_i;
-extern	id		maplinestore_i;
-extern	id		nodestore_i;
-extern	id		mapthingstore_i;
-extern	id		ldefstore_i;
-extern	id		sdefstore_i;
+extern	Storage	*secstore_i;
+extern	Storage	*mapvertexstore_i;
+extern	Storage	*subsecstore_i;
+extern	Storage	*maplinestore_i;
+extern	Storage	*nodestore_i;
+extern	Storage	*mapthingstore_i;
+extern	Storage	*ldefstore_i;
+extern	Storage	*sdefstore_i;
 
 void SaveDoomMap (void);
 

@@ -1,4 +1,5 @@
 #import "doombsp.h"
+#include <SDL2/SDL.h>
 
 // I assume that a grid 8 is used for the maps, so a point will be considered
 // on a line if it is within 8 pixels of it.  The accounts for floating error.
@@ -29,7 +30,7 @@ void	DivlineFromWorldline (divline_t *d, line_t *w)
 ==================
 */
 
-int	PointOnSide (NXPoint *p, divline_t *l)
+int	PointOnSide (NSPoint *p, divline_t *l)
 {
 	float	dx,dy;
 	float	left, right;
@@ -105,7 +106,7 @@ int sign (float i)
 ==================
 */
 
-boolean	LineOnSide (line_t *wl, divline_t *bl)
+int	LineOnSide (line_t *wl, divline_t *bl)
 {
 	int		s1,s2;
 	float	dx, dy;
@@ -186,7 +187,7 @@ f2 = (v1.ys*(v1.x-v2.x) + v1.xs*(v2.y-v1.y)) / (v1.ys*v2.xs - v1.xs*v2.ys)
 ==================
 */
 
-float round (float x)
+float roundf (float x)
 {
 	if (x>0)
 	{
@@ -211,7 +212,7 @@ line_t	*CutLine (line_t *wl, divline_t *bl)
 	line_t		*new_p;
 	divline_t	wld;
 	float		frac;
-	NXPoint		intr;
+	NSPoint		intr;
 	int			offset;
 	
 	cuts++;
@@ -221,9 +222,9 @@ line_t	*CutLine (line_t *wl, divline_t *bl)
 	*new_p = *wl; 
 	
 	frac = InterceptVector (&wld, bl);
-	intr.x = wld.pt.x + round(wld.dx*frac);
-	intr.y = wld.pt.y + round(wld.dy*frac);
-	offset = wl->offset + round(frac*sqrt(wld.dx*wld.dx+wld.dy*wld.dy));
+	intr.x = wld.pt.x + roundf(wld.dx*frac);
+	intr.y = wld.pt.y + roundf(wld.dy*frac);
+	offset = wl->offset + roundf(frac*sqrt(wld.dx*wld.dx+wld.dy*wld.dy));
 	side = PointOnSide (&wl->p1, bl);
 	if (side == 0)
 	{	// line starts on front side
@@ -255,11 +256,11 @@ line_t	*CutLine (line_t *wl, divline_t *bl)
 = A horizontal or vertical split is better than a sloping split
 =
 = The LOWER the returned value, the better.  If the split line does not divide
-= any of the lines at all, MAXINT will be returned
+= any of the lines at all, INT_MAX will be returned
 ================
 */
 
-int EvaluateSplit (id lines_i, line_t *spliton, int bestgrade)
+int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 {
 	int				i,c,side;
 	line_t			*line_p;
@@ -271,7 +272,7 @@ int EvaluateSplit (id lines_i, line_t *spliton, int bestgrade)
 	wl = [linestore_i elementAt: spliton->linedef];
 #if 0
 	if (wl->special == BSPSLIDEENDSPECIAL)
-		return MAXINT;	// NEVER split on this, because it moves
+		return INT_MAX;	// NEVER split on this, because it moves
 #endif
 	DivlineFromWorldline (&divline, spliton);
 	
@@ -298,7 +299,7 @@ int EvaluateSplit (id lines_i, line_t *spliton, int bestgrade)
 			wl = [linestore_i elementAt: line_p->linedef];
 #if 0
 			if (wl->special == BSPSLIDESIDESPECIAL)
-				return MAXINT;	// NEVER split this line, because it slides
+				return INT_MAX;	// NEVER split this line, because it slides
 #endif
 			frontcount++;
 			backcount++;
@@ -313,7 +314,7 @@ int EvaluateSplit (id lines_i, line_t *spliton, int bestgrade)
 	}
 	
 	if (frontcount == 0 || backcount == 0)
-		return MAXINT;			// line does not partition at all
+		return INT_MAX;			// line does not partition at all
 		
 	return grade;
 }
@@ -328,7 +329,7 @@ int EvaluateSplit (id lines_i, line_t *spliton, int bestgrade)
 ================
 */
 
-void ExecuteSplit (id lines_i, line_t *spliton
+void ExecuteSplit (Storage *lines_i, line_t *spliton
 	, id frontlist_i, id backlist_i)
 {
 	int				i,c,side;
@@ -377,9 +378,10 @@ void ExecuteSplit (id lines_i, line_t *spliton
 ================
 */
 
-float	gray = NX_WHITE;
+//float	gray = NX_WHITE; // MARK: SDL
+SDL_Color gray = { 128, 128, 128, 255 };
 
-bspnode_t *BSPList (id lines_i)
+bspnode_t *BSPList (Storage *lines_i)
 {
 	id				frontlist_i, backlist_i;
 	int				i,c, step;
@@ -387,9 +389,10 @@ bspnode_t *BSPList (id lines_i)
 	int				v, bestv;
 	bspnode_t		*node_p;
 	
-	if (draw)
-		PSsetgray (gray);
-	gray = 1.0 - gray;
+    // MARK: SDL
+//	if (draw)
+//        SDL_SetRenderDrawColor(renderer, gray.r, gray.g, gray.b, gray.a);
+//	gray = 1.0 - gray;
 	DrawLineStore (lines_i);
 	
 	node_p = malloc (sizeof(*node_p));
@@ -399,7 +402,7 @@ bspnode_t *BSPList (id lines_i)
 // find the best line to partition on 
 //
 	c = [lines_i count];
-	bestv = MAXINT;	
+	bestv = INT_MAX;	
 	bestline_p = NULL;
 	step = (c/40)+1;		// set this to 1 for an exhaustive search
 research:
@@ -420,7 +423,7 @@ research:
 //
 //printf ("bestv:%i\n",bestv);
 
-	if (bestv == MAXINT)
+	if (bestv == INT_MAX)
 	{
 		if (step > 1)
 		{	// possible to get here with non convex area if BSPSLIDE specials
@@ -492,7 +495,7 @@ void MakeSegs (void)
 		li.linedef = i;
 		li.side = 0;
 		li.offset = 0;
-		li.grouped = false;
+		li.grouped = NO;
 		[segstore_i addElement: &li];
 		
 		if (wl->flags & ML_TWOSIDED)
@@ -502,7 +505,7 @@ void MakeSegs (void)
 			li.linedef = i;
 			li.side = 1;
 			li.offset = 0;
-			li.grouped = false;
+			li.grouped = NO;
 			[segstore_i addElement: &li];
 		}
 	}		

@@ -15,7 +15,7 @@ int		linenum = 0;
 worldline_t *ReadLine (FILE *file)
 {
 	worldline_t	*line;
-	NXPoint		*p1, *p2;
+	NSPoint		*p1, *p2;
 	worldside_t	*s;
 	sectordef_t	*e;
 	int			i;
@@ -26,7 +26,7 @@ worldline_t *ReadLine (FILE *file)
 	p1 = &line->p1;
 	p2 = &line->p2;
 	
-	if (fscanf (file,"(%f,%f) to (%f,%f) : %d : %d : %d\n"
+	if (fscanf (file,"(%lf,%lf) to (%lf,%lf) : %d : %d : %d\n"
 		,&p1->x, &p1->y,&p2->x, &p2->y,&line->flags
 		, &line->special, &line->tag) != 7)
 		Error ("Failed ReadLine");
@@ -91,7 +91,7 @@ typedef struct
 	float	left, right, top, bottom;
 } bbox_t;
 
-void BBoxFromPoints (bbox_t *box, NXPoint *p1, NXPoint *p2)
+void BBoxFromPoints (bbox_t *box, NSPoint *p1, NSPoint *p2)
 {
 	if (p1->x < p2->x)
 	{
@@ -115,7 +115,7 @@ void BBoxFromPoints (bbox_t *box, NXPoint *p1, NXPoint *p2)
 	}
 }
 
-boolean LineOverlaid (worldline_t *line)
+BOOL LineOverlaid (worldline_t *line)
 {
 	int		j, count;
 	worldline_t	*scan;
@@ -139,11 +139,11 @@ boolean LineOverlaid (worldline_t *line)
 		BBoxFromPoints (&scanbox, &scan->p1, &scan->p2);
 				
 		if (linebox.right  > scanbox.left && linebox.left < scanbox.right)
-			return true;
+			return YES;
 		if (linebox.bottom < scanbox.top && linebox.top > scanbox.bottom)
-			return true;
+			return YES;
 	}
-	return false;
+	return NO;
 }
 
 /*
@@ -154,7 +154,7 @@ boolean LineOverlaid (worldline_t *line)
 ===================
 */
 
-id	linestore_i, thingstore_i;
+Storage	*linestore_i, *thingstore_i;
 
 void LoadDoomMap (char *mapname)
 {

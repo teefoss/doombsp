@@ -8,7 +8,6 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-typedef enum {false, true} boolean;
 typedef unsigned char byte;
 #endif
 
@@ -130,7 +129,7 @@ typedef struct
 typedef struct
 {
 	char		name[8];
-	boolean		masked;	
+	BOOL		masked;
 	short		width;
 	short		height;
 	void		**columndirectory;	// OBSOLETE

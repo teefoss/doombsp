@@ -1,18 +1,18 @@
 #import <appkit/appkit.h>
+#include "Storage.h"
 
-
-@interface Wadfile : Object
+@interface Wadfile : NSObject
 {
 	int		handle;
-	char		*pathname;
-	id		info;
+	char    *pathname;
+	Storage *info;
 	BOOL	dirty;
 }
 
 - initFromFile: (char const *)path;
 - initNew: (char const *)path;
 - close;
-- free;
+- (void)free;
 
 - (int)numLumps;
 - (int)lumpsize: (int)lump;

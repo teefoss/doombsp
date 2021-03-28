@@ -11,9 +11,9 @@ float	orgx, orgy;
 float		xl, xh, yl, yh;
 
 
-boolean	LineContact (worldline_t *wl)
+BOOL	LineContact (worldline_t *wl)
 {
-	NXPoint		*p1, *p2, pt1, pt2;
+	NSPoint		*p1, *p2, pt1, pt2;
 	float		lxl, lxh, lyl, lyh;
 	divline_t	ld;
 	int			s1,s2;
@@ -47,7 +47,7 @@ boolean	LineContact (worldline_t *wl)
 	}
 
 	if (lxl >= xh || lxh < xl || lyl >= yh || lyh < yl)		
-		return false;	// no bbox intersections
+		return NO;	// no bbox intersections
 
 	if ( ld.dy / ld.dx > 0)
 	{	// positive slope
@@ -81,7 +81,7 @@ boolean	LineContact (worldline_t *wl)
 
 void GenerateBlockList (int x, int y)
 {
-	NXRect		r;
+	NSRect		r;
 	worldline_t	*wl;
 	int			count, i;
 	
@@ -95,8 +95,9 @@ void GenerateBlockList (int x, int y)
 	r.origin.x = xl;
 	r.origin.y = yl;
 	r.size.width = r.size.height = BLOCKSIZE;
-	if (draw)
-		NXEraseRect (&r);
+	//if (draw)
+		//NXEraseRect (&r);
+    // MARK: SDL
 	
 	count = [linestore_i count];
 	wl = [linestore_i elementAt: 0];

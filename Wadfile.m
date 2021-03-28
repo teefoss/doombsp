@@ -1,4 +1,5 @@
 #import "doombsp.h"
+#include "Wadfile.h"
 #import <ctype.h>
 
 typedef struct
@@ -106,12 +107,12 @@ typedef struct
 	return self;
 }
 
--free
+-(void)free
 {
 	close (handle);
-	[info free];
+	[info dealloc];
 	free (pathname);
-	return [super free];
+	[super dealloc];
 }
 
 //=============================================================================

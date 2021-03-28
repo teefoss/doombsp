@@ -2,7 +2,7 @@
 
 #import "doombsp.h"
 
-id		secdefstore_i;
+Storage		*secdefstore_i;
 
 #define		MAXVERTEX		8192
 #define		MAXTOUCHSECS	16
@@ -213,8 +213,9 @@ void ProcessSectors (void)
 		description:	NULL];
 	
 	buildsector = 0;
-	if (draw)
-		PSsetgray (0);
+	//if (draw)
+		//PSsetgray (0);
+    // MARK: SDL
 	for (i=0 ; i<numss ; i++)
 	{
 		if (subsectornum[i] == -1)

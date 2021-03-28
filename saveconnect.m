@@ -1,6 +1,7 @@
 // saveconnect.m
 
 #import "doombsp.h"
+#include <SDL2/SDL.h>
 
 typedef struct
 {
@@ -45,8 +46,8 @@ bchain_t	*bchains;
 
 void ClearBBox (bbox_t *box)
 {
-	box->xl = box->yl = MAXINT;
-	box->xh = box->yh = MININT;
+	box->xl = box->yl = INT_MAX;
+	box->xh = box->yh = INT_MIN;
 }
 
 void AddToBBox (bbox_t *box, int x, int y)
@@ -104,32 +105,47 @@ int	BPointOnSide (bpoint_t *pt, bdivline_t *l)
 
 void DrawBBox (bbox_t *box)
 {
-	PSmoveto (box->xl,box->yl);
-	PSlineto (box->xh,box->yl);
-	PSlineto (box->xh,box->yh);
-	PSlineto (box->xl,box->yh);
-	PSlineto (box->xl,box->yl);
-	PSstroke ();
-	NXPing ();
+    SDL_Rect r;
+    r.x = box->xl;
+    r.y = box->yl;
+    r.w = box->xh - box->xl + 1;
+    r.h = box->yh - box->yl + 1; // TF: other way round?
+    SDL_RenderDrawRect(renderer_i, &r); // MARK: SDL
 }
 
 void DrawDivline (bdivline_t *li)
 {
-	PSmoveto (li->x,li->y);
-	PSrlineto (li->dx,li->dy);
-	PSstroke ();
-	NXPing ();
+    // MARK: SDL
+    SDL_RenderDrawLine (renderer_i, li->x, li->y, li->dx, li->dy);
+    SDL_RenderPresent (renderer_i);
+//	PSmoveto (li->x,li->y);
+//	PSrlineto (li->dx,li->dy);
+//	PSstroke ();
+//	NXPing ();
 }
 
 void DrawBChain (bchain_t *ch)
 {
 	int		i;
-	
+    int     x, y;
+    
+    // MARK: SDL
+    x = ch->points->x;
+    y = ch->points->y;
+    for (i=1 ; i<ch->numpoints ; i++)
+    {
+        SDL_RenderDrawLine (renderer_i, x, y, ch->points[i].x, ch->points[i].y);
+        x = ch->points[i].x;
+        y = ch->points[i].y;
+    }
+    
+#if 0
 	PSmoveto (ch->points->x,ch->points->y);
 	for (i=1 ; i<ch->numpoints ; i++)
 		PSlineto (ch->points[i].x,ch->points[i].y);
 	PSstroke ();
 	NXPing ();
+#endif
 }
 
 
@@ -146,7 +162,7 @@ bbox_t		sweptarea;
 ====================
 */
 
-boolean DoesChainBlock (bchain_t *chain)
+BOOL DoesChainBlock (bchain_t *chain)
 {
 /*
 
@@ -163,7 +179,7 @@ an end, the path is blocked
 
 	if (sweptarea.xl > chain->bounds.xh || sweptarea.xh < chain->bounds. xl ||
 	sweptarea.yl > chain->bounds. yh || sweptarea.yh < chain->bounds. yl)
-		return false;
+		return NO;
 		
 	startside = -1;		// not started yet
 	
@@ -205,11 +221,11 @@ if (p>0)
 		}
 								
 	// opposite of startside
-		return true;		// totally crossed area
+		return YES;		// totally crossed area
 			
 	}
 
-	return false;
+	return NO;
 }
 
 /*
@@ -372,13 +388,13 @@ blocked:;
 
 void BuildBlockingChains (void)
 {
-	boolean	*used;
-	int			i,j;
-	bpoint_t	*temppoints, *pt_p;
-	bline_t	*li1, *li2;
-	id			chains_i;
-	bchain_t	bch;
-	int			cx, cy;
+	BOOL	        *used;
+	int			    i,j;
+	bpoint_t	    *temppoints, *pt_p;
+	bline_t	*li1,   *li2;
+	Storage			*chains_i;
+	bchain_t	    bch;
+	int			    cx, cy;
 	
 	used = alloca (numblines*sizeof (*used));
 	memset (used,0,numblines*sizeof (*used));
@@ -394,7 +410,7 @@ void BuildBlockingChains (void)
 	{
 		if (used[i])
 			continue;
-		used[i] = true;
+		used[i] = YES;
 		
 		// start a new chain
 		pt_p = temppoints;
@@ -421,7 +437,7 @@ void BuildBlockingChains (void)
 				break;		// no more lines in chain
 				
 		// add to chain
-			used[j] = true;
+			used[j] = YES;
 			pt_p->x = cx = li2->p2.x;
 			pt_p->y = cy = li2->p2.y;
 			pt_p++;
@@ -451,15 +467,15 @@ void BuildBlockingChains (void)
 
 void ProcessConnections (void)
 {
-	int					i, s, wlcount, count;
-	bbox_t				*secbox;
-	id					lines;
+	int				i, s, wlcount, count;
+	bbox_t			*secbox;
+	Storage		    *lines;
 	worldline_t		*wl;
 	mapvertex_t		*vt;
-	maplinedef_t		*p;
-	mapsidedef_t		*sd;
+	maplinedef_t    *p;
+	mapsidedef_t    *sd;
 	bline_t			bline;
-	int					sec;
+	int			    sec;
 		
 	numsectors = [secstore_i count];
 	wlcount = [linestore_i count];
@@ -537,7 +553,7 @@ void OutputConnections (void)
 {
 	int		i;
 	int		bytes;
-	char	*cons;
+	byte	*cons; // TF: was char *
 	char	*bits;
 	
 	cons = connections;

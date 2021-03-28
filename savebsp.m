@@ -2,14 +2,14 @@
 
 #import "doombsp.h"
 
-id		secstore_i;
-id		mapvertexstore_i;
-id		subsecstore_i;
-id		maplinestore_i;
-id		nodestore_i;
-id		mapthingstore_i;
-id		ldefstore_i;
-id		sdefstore_i;
+Storage *secstore_i;
+Storage *mapvertexstore_i;
+Storage *subsecstore_i;
+Storage *maplinestore_i;
+Storage *nodestore_i;
+Storage *mapthingstore_i;
+Storage *ldefstore_i;
+Storage *sdefstore_i;
 
 /*
 ===============================================================================
@@ -28,7 +28,7 @@ id		sdefstore_i;
 ================
 */
 
-void WriteStorage (char *name, id store, int esize)
+void WriteStorage (char *name, Storage *store, int esize)
 {
 	int		count, len;
 	
@@ -300,7 +300,7 @@ float	bbox[4];
 =================
 */
 
-void AddPointToBBox (NXPoint *pt)
+void AddPointToBBox (NSPoint *pt)
 {
 	if (pt->x < bbox[BOXLEFT])
 		bbox[BOXLEFT] = pt->x;
@@ -323,7 +323,7 @@ void AddPointToBBox (NXPoint *pt)
 =================
 */
 
-void ProcessLines (id store_i)
+void ProcessLines (Storage *store_i)
 {
 	int			i,count;
 	line_t 		*wline;
@@ -331,10 +331,10 @@ void ProcessLines (id store_i)
 	short		angle;
 	float		fangle;
 	
-	bbox[BOXLEFT] = MAXINT;
-	bbox[BOXRIGHT] = MININT;
-	bbox[BOXTOP] = MININT;
-	bbox[BOXBOTTOM] = MAXINT;
+	bbox[BOXLEFT] = INT_MAX;
+	bbox[BOXRIGHT] = INT_MIN;
+	bbox[BOXTOP] = INT_MIN;
+	bbox[BOXBOTTOM] = INT_MAX;
 	
 	count = [store_i count];
 	for (i=0 ; i<count ; i++)
@@ -342,7 +342,7 @@ void ProcessLines (id store_i)
 		wline = [store_i elementAt: i];
 		if (wline->grouped)
 			printf ("ERROR: line regrouped\n");
-		wline->grouped = true;
+		wline->grouped = YES;
 		
 		memset (&line, 0, sizeof(line));
 		AddPointToBBox (&wline->p1);
@@ -368,7 +368,7 @@ void ProcessLines (id store_i)
 =================
 */
 
-int ProcessSubsector (id wmaplinestore_i)
+int ProcessSubsector (Storage *wmaplinestore_i)
 {
 	int				count;
 	worldline_t		*linedef;
