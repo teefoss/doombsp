@@ -7,6 +7,6 @@ doombsp runs in the terminal, but if the `-draw` option is specified, it opens a
 
 ## Building
 
-Get SDL2 if you don't have it. The simplest way to do that is likely with Homebrew: `brew install SDL2`.
+Get SDL2 if you don't have it. The simplest way to do that is likely with Homebrew: `brew install sdl2`.
 
 Clone the repo, then type `make`.
