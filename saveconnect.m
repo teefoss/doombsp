@@ -110,13 +110,14 @@ void DrawBBox (bbox_t *box)
     r.y = box->yl;
     r.w = box->xh - box->xl + 1;
     r.h = box->yh - box->yl + 1; // TF: other way round?
-    SDL_RenderDrawRect(renderer_i, &r); // MARK: SDL
+    DrawRect (&r); // MARK: SDL
+    SDL_RenderPresent (renderer_i);
 }
 
 void DrawDivline (bdivline_t *li)
 {
     // MARK: SDL
-    SDL_RenderDrawLine (renderer_i, li->x, li->y, li->dx, li->dy);
+    DrawLine (li->x, li->y, li->dx, li->dy);
     SDL_RenderPresent (renderer_i);
 //	PSmoveto (li->x,li->y);
 //	PSrlineto (li->dx,li->dy);
@@ -134,11 +135,11 @@ void DrawBChain (bchain_t *ch)
     y = ch->points->y;
     for (i=1 ; i<ch->numpoints ; i++)
     {
-        SDL_RenderDrawLine (renderer_i, x, y, ch->points[i].x, ch->points[i].y);
+        DrawLine (x, y, ch->points[i].x, ch->points[i].y);
         x = ch->points[i].x;
         y = ch->points[i].y;
     }
-    
+    SDL_RenderPresent (renderer_i);
 #if 0
 	PSmoveto (ch->points->x,ch->points->y);
 	for (i=1 ; i<ch->numpoints ; i++)
@@ -357,14 +358,14 @@ void BuildConnections (void)
 				
 				if (draw)
 				{
-EraseWindow ();	
-DrawBBox (bbox[0]);
-DrawBBox (bbox[1]);
-DrawDivline (&ends[0]);
-DrawDivline (&ends[1]);
-DrawDivline (&sides[0]);
-DrawDivline (&sides[1]);
-DrawBChain (&bchains[k]);
+                    EraseWindow ();
+                    DrawBBox (bbox[0]);
+                    DrawBBox (bbox[1]);
+                    DrawDivline (&ends[0]);
+                    DrawDivline (&ends[1]);
+                    DrawDivline (&sides[0]);
+                    DrawDivline (&sides[1]);
+                    DrawBChain (&bchains[k]);
 				}
 				goto blocked;
 			}

@@ -379,7 +379,7 @@ void ExecuteSplit (Storage *lines_i, line_t *spliton
 */
 
 //float	gray = NX_WHITE; // MARK: SDL
-SDL_Color gray = { 128, 128, 128, 255 };
+SDL_Color gray = { 255, 255, 255, 255 };
 
 bspnode_t *BSPList (Storage *lines_i)
 {
@@ -390,9 +390,9 @@ bspnode_t *BSPList (Storage *lines_i)
 	bspnode_t		*node_p;
 	
     // MARK: SDL
-//	if (draw)
-//        SDL_SetRenderDrawColor(renderer, gray.r, gray.g, gray.b, gray.a);
-//	gray = 1.0 - gray;
+	if (draw)
+        SDL_SetRenderDrawColor(renderer_i, gray.r, gray.g, gray.b, gray.a);
+//	gray = 1.0 - gray; ... wut
 	DrawLineStore (lines_i);
 	
 	node_p = malloc (sizeof(*node_p));

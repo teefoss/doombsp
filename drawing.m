@@ -2,13 +2,14 @@
 #import "doombsp.h"
 #include <SDL2/SDL.h>
 
-// MARK: SDL
 //id 			window_i, view_i;
 SDL_Window *    window_i;
 SDL_Renderer *  renderer_i;
 float		    scale = 0.125;
 NSRect		    worldbounds;
 SDL_Point       draw_origin;
+
+// TF 3/28: Wrappers for SDL Functions that offset by draw_origin
 
 // draw a line with draw_origin offset
 void DrawLine(int x1, int y1, int x2, int y2)
@@ -18,6 +19,22 @@ void DrawLine(int x1, int y1, int x2, int y2)
     x2 -= draw_origin.x;
     y2 -= draw_origin.y;
     SDL_RenderDrawLine (renderer_i, x1, y1, x2, y2);
+}
+
+void FillRect(const SDL_Rect *r)
+{
+    SDL_Rect adjust;
+    adjust.x = r->x - draw_origin.x;
+    adjust.y = r->y - draw_origin.y;
+    SDL_RenderFillRect (renderer_i, &adjust);
+}
+
+void DrawRect(const SDL_Rect *r)
+{
+    SDL_Rect adjust;
+    adjust.x = r->x - draw_origin.x;
+    adjust.y = r->y - draw_origin.y;
+    SDL_RenderDrawRect (renderer_i, &adjust);
 }
 
 /*
@@ -237,9 +254,14 @@ void DrawMap (void)
 #endif
     draw_origin.x = worldbounds.origin.x;
     draw_origin.y = worldbounds.origin.y;
+    SDL_RenderSetLogicalSize (renderer_i,
+                              worldbounds.size.width,
+                              worldbounds.size.height);
 			
 	//[view_i lockFocus];
 	//PSsetgray (NX_BLACK);
+
+    EraseWindow();
     SDL_SetRenderDrawColor (renderer_i, 0, 0, 0, 255);
 	DrawLineStore (linestore_i);
 }
@@ -260,7 +282,14 @@ void EraseWindow (void)
 		
 	//NXEraseRect (&worldbounds);
 	//NXPing ();
-    SDL_RenderClear (renderer_i); // MARK: SDL
+    
+    // TF 3/28 According to google images and Digital Color Meter,
+    // this is the default window background color on NextStep
+    SDL_Color old;
+    SDL_GetRenderDrawColor (renderer_i, &old.r, &old.g, &old.b, &old.a);
+    SDL_SetRenderDrawColor (renderer_i, 0xaa, 0xaa, 0xaa, 0xff);
+    SDL_RenderClear (renderer_i);
+    SDL_SetRenderDrawColor (renderer_i, old.r, old.g, old.b, old.a);
 }
 
 

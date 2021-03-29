@@ -45,7 +45,7 @@ void RecursiveGroupSubsector (int ssnum)
 	{
 		seg = [maplinestore_i elementAt: ss->firstseg+l];
 		ld = [ldefstore_i elementAt: seg->linedef];
-DrawLineDef (ld);
+        DrawLineDef (ld);
 		sd = [sdefstore_i elementAt: ld->sidenum[seg->side]];
 		sd->sector = buildsector;
 		
@@ -211,16 +211,17 @@ void ProcessSectors (void)
 		initCount:		0
 		elementSize:	sizeof(mapsector_t)
 		description:	NULL];
-	
+
 	buildsector = 0;
-	//if (draw)
+	if (draw)
+        SDL_SetRenderDrawColor (renderer_i, 0, 0, 0, 255);
 		//PSsetgray (0);
     // MARK: SDL
 	for (i=0 ; i<numss ; i++)
 	{
 		if (subsectornum[i] == -1)
 		{
-	EraseWindow ();
+            EraseWindow ();
 			RecursiveGroupSubsector (i);
 			sec = *(mapsector_t *)[secdefstore_i elementAt: subsectordef[i]];
 			[secstore_i addElement: &sec];

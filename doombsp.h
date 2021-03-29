@@ -125,7 +125,7 @@ void LoadDoomMap (char *mapname);
 */
 
 //extern	id 	window_i, view_i;
-extern  SDL_Window *window_t; // MARK: SDL
+extern  SDL_Window *window_i;
 extern  SDL_Renderer *renderer_i;
 extern	float	    scale;
 extern	NSRect		worldbounds;
@@ -135,7 +135,9 @@ void DrawMap (void);
 void DrawLineStore (id lines_i);
 void DrawDivLine (divline_t *div);
 void DrawLineDef (maplinedef_t *ld);
-
+void DrawLine(int x1, int y1, int x2, int y2);
+void FillRect(const SDL_Rect * r);
+void DrawRect(const SDL_Rect *r);
 
 /*
 ===============================================================================

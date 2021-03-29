@@ -95,9 +95,14 @@ void GenerateBlockList (int x, int y)
 	r.origin.x = xl;
 	r.origin.y = yl;
 	r.size.width = r.size.height = BLOCKSIZE;
-	//if (draw)
-		//NXEraseRect (&r);
+    
     // MARK: SDL
+    // taking a wild guess that NXEraseRect() clears to current color...
+	if (draw)
+    {
+        SDL_Rect ri = { r.origin.x, r.origin.y, r.size.width, r.size.height };
+        FillRect (&ri);
+    }
 	
 	count = [linestore_i count];
 	wl = [linestore_i elementAt: 0];

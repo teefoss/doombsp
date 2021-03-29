@@ -86,6 +86,10 @@ printf ("segment cuts: %i\n",cuts);
 	[wad_i free];
 	
 //getchar();
+    
+    SDL_DestroyRenderer (renderer_i);
+    SDL_DestroyWindow (window_i);
+    SDL_Quit();
 
 	return 0;
 }
