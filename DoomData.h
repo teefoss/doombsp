@@ -129,7 +129,7 @@ typedef struct
 typedef struct
 {
 	char		name[8];
-	BOOL		masked;
+	bool		masked;
 	short		width;
 	short		height;
 	void		**columndirectory;	// OBSOLETE

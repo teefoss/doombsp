@@ -1,6 +1,6 @@
 // saveblocks.m
 
-#import "doombsp.h"
+#include "doombsp.h"
 
 short	datalist[0x10000], *data_p;
 float	orgx, orgy;
@@ -11,9 +11,9 @@ float	orgx, orgy;
 float		xl, xh, yl, yh;
 
 
-BOOL	LineContact (worldline_t *wl)
+bool	LineContact (worldline_t *wl)
 {
-	NSPoint		*p1, *p2, pt1, pt2;
+	NXPoint		*p1, *p2, pt1, pt2;
 	float		lxl, lxh, lyl, lyh;
 	divline_t	ld;
 	int			s1,s2;
@@ -47,7 +47,7 @@ BOOL	LineContact (worldline_t *wl)
 	}
 
 	if (lxl >= xh || lxh < xl || lyl >= yh || lyh < yl)		
-		return NO;	// no bbox intersections
+		return false;	// no bbox intersections
 
 	if ( ld.dy / ld.dx > 0)
 	{	// positive slope
@@ -81,7 +81,7 @@ BOOL	LineContact (worldline_t *wl)
 
 void GenerateBlockList (int x, int y)
 {
-	NSRect		r;
+	NXRect		r;
 	worldline_t	*wl;
 	int			count, i;
 	
@@ -97,15 +97,11 @@ void GenerateBlockList (int x, int y)
 	r.size.width = r.size.height = BLOCKSIZE;
     
     // MARK: SDL
-    // taking a wild guess that NXEraseRect() clears to current color...
 	if (draw)
-    {
-        SDL_Rect ri = { r.origin.x, r.origin.y, r.size.width, r.size.height };
-        FillRect (&ri);
-    }
+        NXEraseRect(&r);
 	
-	count = [linestore_i count];
-	wl = [linestore_i elementAt: 0];
+	count = linestore_i->count();
+	wl = (worldline_t *)linestore_i->elementAt(0);
 	
 	for (i=0 ; i<count ; i++,wl++)
 	{
@@ -211,7 +207,7 @@ void SaveBlocks (void)
 	close (outhandle);
 }
 #endif
-	[wad_i addName: "blockmap" data:datalist size:len];
+	wad_i->addName("blockmap", datalist, len);
 
 }
 

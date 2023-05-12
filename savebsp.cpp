@@ -1,6 +1,6 @@
 // savebsp.m
 
-#import "doombsp.h"
+#include "doombsp.h"
 
 Storage *secstore_i;
 Storage *mapvertexstore_i;
@@ -28,13 +28,13 @@ Storage *sdefstore_i;
 ================
 */
 
-void WriteStorage (char *name, Storage *store, int esize)
+void WriteStorage (const char *name, Storage *store, int esize)
 {
 	int		count, len;
 	
-	count = [store count];
+	count = store->count();
 	len = esize*count;
-	[wad_i addName: name data:[store elementAt:0] size:len];
+	wad_i->addName(name, store->elementAt(0), len);
 	printf ("%s (%i): %i\n",name,count,len);	
 }
 
@@ -52,8 +52,8 @@ void OutputSectors (void)
 	int		i, count;
 	mapsector_t		*p;
 
-	count = [secstore_i count];
-	p = [secstore_i elementAt:0];
+	count = secstore_i->count();
+	p = (mapsector_t *)secstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->floorheight = SHORT(p->floorheight);
@@ -79,8 +79,8 @@ void OutputSegs (void)
 	int		i, count;
 	mapseg_t		*p;
 
-	count = [maplinestore_i count];
-	p = [maplinestore_i elementAt:0];
+	count = maplinestore_i->count();
+	p = (mapseg_t *)maplinestore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->v1 = SHORT(p->v1);
@@ -107,8 +107,8 @@ void OutputSubsectors (void)
 	int		i, count;
 	mapsubsector_t		*p;
 
-	count = [subsecstore_i count];
-	p = [subsecstore_i elementAt:0];
+	count = subsecstore_i->count();
+	p = (mapsubsector_t *)subsecstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->numsegs = SHORT(p->numsegs);
@@ -131,8 +131,8 @@ void OutputVertexes (void)
 	int		i, count;
 	mapvertex_t		*p;
 
-	count = [mapvertexstore_i count];
-	p = [mapvertexstore_i elementAt:0];
+	count = mapvertexstore_i->count();
+	p = (mapvertex_t *)mapvertexstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->x = SHORT(p->x);
@@ -155,8 +155,8 @@ void OutputThings (void)
 	int		i, count;
 	mapthing_t		*p;
 
-	count = [mapthingstore_i count];
-	p = [mapthingstore_i elementAt:0];
+	count = mapthingstore_i->count();
+	p = (mapthing_t *)mapthingstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->x = SHORT(p->x);
@@ -182,8 +182,8 @@ void OutputLineDefs (void)
 	int		i, count;
 	maplinedef_t		*p;
 
-	count = [ldefstore_i count];
-	p = [ldefstore_i elementAt:0];
+	count = ldefstore_i->count();
+	p = (maplinedef_t *)ldefstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->v1 = SHORT(p->v1);
@@ -212,8 +212,8 @@ void OutputSideDefs (void)
 	int		i, count;
 	mapsidedef_t		*p;
 
-	count = [sdefstore_i count];
-	p = [sdefstore_i elementAt:0];
+	count = sdefstore_i->count();
+	p = (mapsidedef_t *)sdefstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		p->textureoffset = SHORT(p->textureoffset);
@@ -237,8 +237,8 @@ void OutputNodes (void)
 	int		i, j, count;
 	mapnode_t		*p;
 
-	count = [nodestore_i count];
-	p = [nodestore_i elementAt:0];
+	count = nodestore_i->count();
+	p = (mapnode_t *)nodestore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		for (j=0 ; j<sizeof(mapnode_t)/2 ; j++)
@@ -275,13 +275,13 @@ int UniqueVertex (int x, int y)
 	mv.y = y;
 	
 // see if an identical vertex already exists
-	count = [mapvertexstore_i count];
-	mvp = [mapvertexstore_i elementAt:0];
+	count = mapvertexstore_i->count();
+	mvp = (mapvertex_t *)mapvertexstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, mvp++)
 		if (mvp->x == mv.x && mvp->y == mv.y)
 			return i;
 
-	[mapvertexstore_i addElement: &mv];
+	mapvertexstore_i->addElement(&mv);
 	
 	return count;	
 }
@@ -300,7 +300,7 @@ float	bbox[4];
 =================
 */
 
-void AddPointToBBox (NSPoint *pt)
+void AddPointToBBox (NXPoint *pt)
 {
 	if (pt->x < bbox[BOXLEFT])
 		bbox[BOXLEFT] = pt->x;
@@ -336,13 +336,13 @@ void ProcessLines (Storage *store_i)
 	bbox[BOXTOP] = INT_MIN;
 	bbox[BOXBOTTOM] = INT_MAX;
 	
-	count = [store_i count];
+	count = store_i->count();
 	for (i=0 ; i<count ; i++)
 	{
-		wline = [store_i elementAt: i];
+		wline = (line_t *)store_i->elementAt(i);
 		if (wline->grouped)
 			printf ("ERROR: line regrouped\n");
-		wline->grouped = YES;
+		wline->grouped = true;
 		
 		memset (&line, 0, sizeof(line));
 		AddPointToBBox (&wline->p1);
@@ -355,7 +355,7 @@ void ProcessLines (Storage *store_i)
 		fangle = atan2 (wline->p2.y - wline->p1.y, wline->p2.x - wline->p1.x);
 		angle = (short)(fangle/(PI*2)*0x10000);
 		line.angle = angle;
-		[maplinestore_i addElement: &line];
+		maplinestore_i->addElement(&line);
 	}
 }
 
@@ -377,21 +377,21 @@ int ProcessSubsector (Storage *wmaplinestore_i)
 	
 	memset (&sub,0,sizeof(sub));
 	
-	count = [wmaplinestore_i count];
+	count = wmaplinestore_i->count();
 	if (count < 1)
 		Error ("ProcessSubsector: count = %i",count);
 		
-	wline = [wmaplinestore_i elementAt: 0];
+	wline = (line_t *)wmaplinestore_i->elementAt(0);
 	
-	linedef = [linestore_i elementAt: wline->linedef];
+	linedef = (worldline_t *)linestore_i->elementAt(wline->linedef);
 	sub.numsegs = count;
-	sub.firstseg = [maplinestore_i count];
+	sub.firstseg = maplinestore_i->count();
 	ProcessLines (wmaplinestore_i);
 	
 // add the new subsector
-	[subsecstore_i addElement: &sub];
+	subsecstore_i->addElement(&sub);
 	
-	return [subsecstore_i count]-1;
+	return subsecstore_i->count()-1;
 }
 
 /*
@@ -438,8 +438,8 @@ int ProcessNode (bspnode_t *node, short *totalbox)
 	totalbox[BOXRIGHT] = MAX(subbox[0][BOXRIGHT], subbox[1][BOXRIGHT]);
 	totalbox[BOXBOTTOM] = MIN(subbox[0][BOXBOTTOM], subbox[1][BOXBOTTOM]);
 	
-	[nodestore_i addElement: &mnode];
-	return [nodestore_i count] - 1;	
+	nodestore_i->addElement(&mnode);
+	return nodestore_i->count() - 1;
 }
 
 
@@ -457,18 +457,9 @@ void ProcessNodes (void)
 {
 	short	worldbounds[4];
 	
-	subsecstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapsubsector_t)
-		description:	NULL];
-	maplinestore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapseg_t)
-		description:	NULL];
-	nodestore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapnode_t)
-		description:	NULL];
+    subsecstore_i = Storage::initCount(0, sizeof(mapsubsector_t), "subsecstore_i");
+    maplinestore_i = Storage::initCount(0, sizeof(mapseg_t), "maplinestore_i");
+    nodestore_i = Storage::initCount(0, sizeof(mapnode_t), "nodestore_i");
 
 	ProcessNode (startnode, worldbounds);
 
@@ -489,13 +480,10 @@ void ProcessThings (void)
 	mapthing_t		mt;
 	int				count;
 	
-	mapthingstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapthing_t)
-		description:	NULL];
+    mapthingstore_i = Storage::initCount(0, sizeof(mapthing_t), "mapthingstore_i");
 
-	count = [thingstore_i count];
-	wt = [thingstore_i elementAt: 0];
+	count = thingstore_i->count();
+	wt = (worldthing_t *)thingstore_i->elementAt(0);
 
 	while (count--)
 	{	 
@@ -505,7 +493,7 @@ void ProcessThings (void)
 		mt.angle =wt->angle;
 		mt.type =wt->type;
 		mt.options =wt->options;
-		[mapthingstore_i addElement: &mt];
+		mapthingstore_i->addElement(&mt);
 		wt++;
 	}
 	
@@ -533,8 +521,8 @@ int ProcessSidedef (worldside_t *ws)
 	memcpy (ms.midtexture, ws->midtexture, 8);
 	ms.sector = ws->sector;
 	
-	[sdefstore_i addElement: &ms];
-	return [sdefstore_i count]-1;
+	sdefstore_i->addElement(&ms);
+	return sdefstore_i->count()-1;
 }
 
 /*
@@ -550,23 +538,14 @@ void ProcessLineSideDefs (void)
 {
 	int				i, count;
 	maplinedef_t	ld;
-	worldline_t		*wl;
-	
-	mapvertexstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapvertex_t)
-		description:	NULL];
-	ldefstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(maplinedef_t)
-		description:	NULL];
-	sdefstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapsidedef_t)
-		description:	NULL];
+    worldline_t		*wl;
 
-	count = [linestore_i count];
-	wl = [linestore_i elementAt:0];
+    mapvertexstore_i = Storage::initCount(0, sizeof(mapvertex_t), "mapvertexstore_i");
+    ldefstore_i = Storage::initCount(0, sizeof(maplinedef_t), "ldefstore_i");
+    sdefstore_i = Storage::initCount(0, sizeof(mapsidedef_t), "sdefstore_i");
+
+    count = linestore_i->count();
+    wl = (worldline_t *)linestore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, wl++)
 	{
 		ld.v1 = UniqueVertex(wl->p1.x,wl->p1.y);
@@ -579,7 +558,7 @@ void ProcessLineSideDefs (void)
 			ld.sidenum[1] =ProcessSidedef(&wl->side[1]);
 		else
 			ld.sidenum[1] =-1;
-		[ldefstore_i addElement: &ld];
+		ldefstore_i->addElement(&ld);
 	}
 	
 }

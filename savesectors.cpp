@@ -1,6 +1,6 @@
 // savebsp.m
 
-#import "doombsp.h"
+#include "doombsp.h"
 
 Storage		*secdefstore_i;
 
@@ -38,15 +38,15 @@ void RecursiveGroupSubsector (int ssnum)
 	maplinedef_t	*ld;
 	mapsidedef_t	*sd;
 	
-	ss = [subsecstore_i elementAt:ssnum];
+	ss = (mapsubsector_t *)subsecstore_i->elementAt(ssnum);
 	subsectornum[ssnum] = buildsector;
 	
 	for (l=0 ; l<ss->numsegs ; l++)
 	{
-		seg = [maplinestore_i elementAt: ss->firstseg+l];
-		ld = [ldefstore_i elementAt: seg->linedef];
+		seg = (mapseg_t *)maplinestore_i->elementAt(ss->firstseg+l);
+		ld = (maplinedef_t *)ldefstore_i->elementAt(seg->linedef);
         DrawLineDef (ld);
-		sd = [sdefstore_i elementAt: ld->sidenum[seg->side]];
+		sd = (mapsidedef_t *)sdefstore_i->elementAt(ld->sidenum[seg->side]);
 		sd->sector = buildsector;
 		
 		for (vt=0 ; vt<2 ; vt++)
@@ -99,13 +99,13 @@ int UniqueSector (sectordef_t *def)
 	ms.tag = def->tag;
 	
 // see if an identical sector already exists
-	count = [secdefstore_i count];
-	msp = [secdefstore_i elementAt:0];
+	count = secdefstore_i->count();
+	msp = (mapsector_t *)secdefstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, msp++)
 		if (!bcmp(msp, &ms, sizeof(ms)))
 			return i;
 
-	[secdefstore_i addElement: &ms];
+	secdefstore_i->addElement(&ms);
 	
 	return count;	
 }
@@ -144,16 +144,13 @@ void BuildSectordefs (void)
 //
 // build sectordef list
 //
-	secdefstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapsector_t)
-		description:	NULL];
-	
-	count = [linestore_i count];
-	wl= [linestore_i elementAt:0];
+    secdefstore_i = Storage::initCount(0, sizeof(mapsector_t), "secdefstore_i");
+
+	count = linestore_i->count();
+	wl= (worldline_t *)linestore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, wl++)
 	{
-		seg = [maplinestore_i elementAt: i];
+//		seg = (mapseg_t *)maplinestore_i->elementAt(i); TF: unused in original
 		wl->side[0].sector = UniqueSector(&wl->side[0].sectordef);
 		if (wl->flags & ML_TWOSIDED)
 		{
@@ -188,43 +185,39 @@ void ProcessSectors (void)
 //
 	memset (vertexsubcount, 0, sizeof(vertexsubcount));
 	memset (vertexsublist, 0, sizeof(vertexsublist));
-	numss = [subsecstore_i count];
+	numss = subsecstore_i->count();
 	for (i=0 ; i<numss ; i++)
 	{
-		ss = [subsecstore_i elementAt: i];
+		ss = (mapsubsector_t *)subsecstore_i->elementAt(i);
 		for (l=0 ; l<ss->numsegs ; l++)
 		{
-			seg = [maplinestore_i elementAt: ss->firstseg+l];
+			seg = (mapseg_t *)maplinestore_i->elementAt(ss->firstseg+l);
 			AddSubsectorToVertex (i, seg->v1);
 			AddSubsectorToVertex (i, seg->v2);
 		}
 		subsectornum[i] = -1;		// ungrouped
-		ml = [ldefstore_i elementAt: seg->linedef];
-		ms = [sdefstore_i elementAt: ml->sidenum[seg->side]];
+		ml = (maplinedef_t *)ldefstore_i->elementAt(seg->linedef);
+		ms = (mapsidedef_t *)sdefstore_i->elementAt(ml->sidenum[seg->side]);
 		subsectordef[i] = ms->sector;
 	}
 	
 //
 // recursively build final sectors
 //
-	secstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(mapsector_t)
-		description:	NULL];
+    secstore_i = Storage::initCount(0, sizeof(mapsector_t), "secstore_i");
 
 	buildsector = 0;
 	if (draw)
         SDL_SetRenderDrawColor (renderer_i, 0, 0, 0, 255);
 		//PSsetgray (0);
-    // MARK: SDL
 	for (i=0 ; i<numss ; i++)
 	{
 		if (subsectornum[i] == -1)
 		{
             EraseWindow ();
 			RecursiveGroupSubsector (i);
-			sec = *(mapsector_t *)[secdefstore_i elementAt: subsectordef[i]];
-			[secstore_i addElement: &sec];
+			sec = *(mapsector_t *)secdefstore_i->elementAt(subsectordef[i]);
+			secstore_i->addElement(&sec);
 			buildsector++;
 		}
 	}

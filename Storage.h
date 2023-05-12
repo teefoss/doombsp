@@ -1,27 +1,25 @@
+#ifndef STORAGE_H
+#define STORAGE_H
 
-#import <Foundation/NSObject.h>
-
-@interface Storage:NSObject
+struct Storage
 {
 	uint8_t *data;
 	unsigned int elements;
 	unsigned int elementSize;
-	const char *description;
-}
+	const char *_description;
 
-- (void) addElement:(void *)anElement;
-//- copyFromZone:(NXZone *)zone;
-- (unsigned int)count;
-- (const char *)description;
-- (void *)elementAt:(unsigned int)index;
-- (void) empty;
-- (void) dealloc;
-- (Storage *) initCount:(unsigned int)count
-                        elementSize: (unsigned int) sizeInBytes
-                        description: (const char *) string;
-- (void) insertElement:(void *)anElement at:(unsigned int)index;
-- (void) removeElementAt:(unsigned int)index;
-- (void) replaceElementAt:(unsigned int)index with:(void *)anElement;
+    void addElement(void *anElement);
+    unsigned int count();
+    const char * description();
+    void *elementAt(unsigned int index);
+    void empty();
+    void dealloc();
+    static Storage * initCount(unsigned int count,
+                               unsigned int elementSizeInBytes,
+                               const char *description);
+    void insertElement(void *anElement, unsigned int index);
+    void removeElementAt(unsigned int index);
+    void replaceElementAt(unsigned int index, void *anElement);
+};
 
-@end
-
+#endif /* STORAGE_H */

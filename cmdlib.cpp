@@ -32,7 +32,7 @@
 =================
 */
 
-void Error (char *error, ...)
+void Error (const char *error, ...)
 {
 	va_list argptr;
 

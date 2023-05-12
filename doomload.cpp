@@ -1,5 +1,5 @@
 // doomload.m
-#import "doombsp.h"
+#include "doombsp.h"
 
 
 int		linenum = 0;
@@ -15,18 +15,18 @@ int		linenum = 0;
 worldline_t *ReadLine (FILE *file)
 {
 	worldline_t	*line;
-	NSPoint		*p1, *p2;
+	NXPoint		*p1, *p2;
 	worldside_t	*s;
 	sectordef_t	*e;
 	int			i;
 	
-	line = malloc(sizeof(*line));
+	line = (worldline_t *)malloc(sizeof(*line));
 	memset (line, 0, sizeof(*line));
 
 	p1 = &line->p1;
 	p2 = &line->p2;
 	
-	if (fscanf (file,"(%lf,%lf) to (%lf,%lf) : %d : %d : %d\n"
+	if (fscanf (file,"(%f,%f) to (%f,%f) : %d : %d : %d\n"
 		,&p1->x, &p1->y,&p2->x, &p2->y,&line->flags
 		, &line->special, &line->tag) != 7)
 		Error ("Failed ReadLine");
@@ -64,7 +64,7 @@ worldthing_t *ReadThing (FILE *file)
 	int				x,y;
 	worldthing_t	*thing;
 	
-	thing = malloc(sizeof(*thing));
+	thing = (worldthing_t *)malloc(sizeof(*thing));
 	memset (thing, 0, sizeof(*thing));
 
 	if (fscanf (file,"(%i,%i, %d) :%d, %d\n"
@@ -91,7 +91,7 @@ typedef struct
 	float	left, right, top, bottom;
 } bbox_t;
 
-void BBoxFromPoints (bbox_t *box, NSPoint *p1, NSPoint *p2)
+void BBoxFromPoints (bbox_t *box, NXPoint *p1, NXPoint *p2)
 {
 	if (p1->x < p2->x)
 	{
@@ -115,7 +115,7 @@ void BBoxFromPoints (bbox_t *box, NSPoint *p1, NSPoint *p2)
 	}
 }
 
-BOOL LineOverlaid (worldline_t *line)
+bool LineOverlaid (worldline_t *line)
 {
 	int		j, count;
 	worldline_t	*scan;
@@ -126,8 +126,8 @@ BOOL LineOverlaid (worldline_t *line)
 	wl.dx = line->p2.x - line->p1.x;
 	wl.dy = line->p2.y - line->p1.y;
 
-	count = [linestore_i count];
-	scan = [linestore_i elementAt:0];
+	count = linestore_i->count();
+	scan = (worldline_t *)linestore_i->elementAt(0);
 	for (j=0 ; j<count ; j++, scan++)
 	{
 		if (PointOnSide (&scan->p1, &wl) != -1)
@@ -139,11 +139,11 @@ BOOL LineOverlaid (worldline_t *line)
 		BBoxFromPoints (&scanbox, &scan->p1, &scan->p2);
 				
 		if (linebox.right  > scanbox.left && linebox.left < scanbox.right)
-			return YES;
+			return true;
 		if (linebox.bottom < scanbox.top && linebox.top > scanbox.bottom)
-			return YES;
+			return true;
 	}
-	return NO;
+	return false;
 }
 
 /*
@@ -177,10 +177,7 @@ void LoadDoomMap (char *mapname)
 	if (fscanf (file,"\nlines:%d\n",&linecount) != 1)
 		Error ("LoadDoomMap: can't read linecount");
 	printf ("%i lines\n", linecount);
-	linestore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(worldline_t)
-		description:	NULL];
+    linestore_i = Storage::initCount(0, sizeof(worldline_t), "linestore_i");
 
 	for (i=0 ; i<linecount ; i++)
 	{
@@ -195,7 +192,7 @@ void LoadDoomMap (char *mapname)
 			printf ("WARNING: line %i is overlaid (removed)\n",i);
 			continue;
 		}
-		[linestore_i addElement: line];
+		linestore_i->addElement(line);
 	}
 		
 //
@@ -204,13 +201,10 @@ void LoadDoomMap (char *mapname)
 	if (fscanf (file,"\nthings:%d\n",&thingcount) != 1)
 		Error ("LoadDoomMap: can't read thingcount");
 	printf ( "%i things\n", thingcount);
-	thingstore_i = [[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(worldthing_t)
-		description:	NULL];
-		
+    thingstore_i = Storage::initCount(0, sizeof(worldthing_t), "thingstore_i");
+
 	for (i=0 ; i<thingcount ; i++)
-		[thingstore_i addElement: ReadThing (file)];
+		thingstore_i->addElement(ReadThing (file));
 
 	fclose (file);
 

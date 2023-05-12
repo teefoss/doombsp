@@ -8,14 +8,14 @@
 typedef unsigned char byte;
 #endif
 
-#ifdef __NeXT__
+//#ifdef __NeXT__
 
-#define O_BINARY        0
-#define PATHSEPERATOR   '/'
+//#define O_BINARY        0
+//#define PATHSEPERATOR   '/'
 
-#endif
+//#endif
 
-void	Error (char *error, ...);
+void	Error (const char *error, ...);
 
 int 	SafeOpenWrite (char *filename);
 void 	SafeWrite (int handle, void *buffer, long count);

@@ -11,12 +11,13 @@ OBJ=Storage.o 		\
 	savebsp.o 		\
 	saveconnect.o 	\
 	savesectors.o 	\
+	nextstep.o		\
 
 $(TARGET): $(OBJ)
-	$(CC) $^ -o $@ -lSDL2 -framework Foundation
+	$(CC) $^ -o $@ -lSDL2
 
-%.o: %.c %.m
-	$(CC) -c $< -o $@
+%.o: %.cpp
+	$(CC) -g -c $< -o $@
 
 clean:
 	@rm -rf *.o $(TARGET)

@@ -1,4 +1,4 @@
-#import "doombsp.h"
+#include "doombsp.h"
 #include <SDL2/SDL.h>
 
 // I assume that a grid 8 is used for the maps, so a point will be considered
@@ -30,7 +30,7 @@ void	DivlineFromWorldline (divline_t *d, line_t *w)
 ==================
 */
 
-int	PointOnSide (NSPoint *p, divline_t *l)
+int	PointOnSide (NXPoint *p, divline_t *l)
 {
 	float	dx,dy;
 	float	left, right;
@@ -212,12 +212,12 @@ line_t	*CutLine (line_t *wl, divline_t *bl)
 	line_t		*new_p;
 	divline_t	wld;
 	float		frac;
-	NSPoint		intr;
+	NXPoint		intr;
 	int			offset;
 	
 	cuts++;
 	DivlineFromWorldline (&wld, wl);
-	new_p = malloc (sizeof(line_t));
+	new_p = (line_t *)malloc (sizeof(line_t));
 	memset (new_p,0,sizeof(*new_p));
 	*new_p = *wl; 
 	
@@ -265,11 +265,11 @@ int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 	int				i,c,side;
 	line_t			*line_p;
 	divline_t		divline;
-	int				frontcount, backcount, max, new;
+	int				frontcount, backcount, max, _new;
 	int				grade;
 	worldline_t		*wl;
 	
-	wl = [linestore_i elementAt: spliton->linedef];
+	wl = (worldline_t *)linestore_i->elementAt(spliton->linedef);
 #if 0
 	if (wl->special == BSPSLIDEENDSPECIAL)
 		return INT_MAX;	// NEVER split on this, because it moves
@@ -277,12 +277,12 @@ int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 	DivlineFromWorldline (&divline, spliton);
 	
 	frontcount = backcount = 0;
-	c = [lines_i count];
+	c = lines_i->count();
 	grade = 0;
 		
 	for (i=0 ; i<c ; i++)
 	{
-		line_p = [lines_i elementAt:i];
+		line_p = (line_t *)lines_i->elementAt(i);
 		if (line_p == spliton)
 			side = 0;
 		else
@@ -296,7 +296,7 @@ int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 			backcount++;
 			break;
 		case -2:
-			wl = [linestore_i elementAt: line_p->linedef];
+			wl = (worldline_t *)linestore_i->elementAt(line_p->linedef);
 #if 0
 			if (wl->special == BSPSLIDESIDESPECIAL)
 				return INT_MAX;	// NEVER split this line, because it slides
@@ -307,8 +307,8 @@ int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 		}
 		
 		max = MAX(frontcount,backcount);
-		new = (frontcount+backcount) - c;
-		grade = max+new*8;
+		_new = (frontcount+backcount) - c;
+		grade = max+_new*8;
 		if (grade > bestgrade)
 			return grade;		// might as well stop now
 	}
@@ -329,8 +329,10 @@ int EvaluateSplit (Storage *lines_i, line_t *spliton, int bestgrade)
 ================
 */
 
-void ExecuteSplit (Storage *lines_i, line_t *spliton
-	, id frontlist_i, id backlist_i)
+void ExecuteSplit (Storage *lines_i,
+                   line_t *spliton,
+                   Storage *frontlist_i,
+                   Storage *backlist_i)
 {
 	int				i,c,side;
 	line_t			*line_p, *newline_p;
@@ -339,11 +341,11 @@ void ExecuteSplit (Storage *lines_i, line_t *spliton
 	DivlineFromWorldline (&divline, spliton);
 	DrawDivLine (&divline);
 	
-	c = [lines_i count];
+	c = lines_i->count();
 		
 	for (i=0 ; i<c ; i++)
 	{
-		line_p = [lines_i elementAt:i];
+		line_p = (line_t *)lines_i->elementAt(i);
 		if (line_p == spliton)
 			side = 0;
 		else
@@ -351,15 +353,15 @@ void ExecuteSplit (Storage *lines_i, line_t *spliton
 		switch (side)
 		{
 		case 0:
-			[frontlist_i addElement: line_p];
+			frontlist_i->addElement(line_p);
 			break;
 		case 1:
-			[backlist_i addElement: line_p];
+			backlist_i->addElement(line_p);
 			break;
 		case -2:
 			newline_p = CutLine (line_p, &divline);
-			[frontlist_i addElement: line_p];
-			[backlist_i addElement: newline_p];
+			frontlist_i->addElement(line_p);
+			backlist_i->addElement(newline_p);
 			break;
 		default:
 			Error ("ExecuteSplit: bad side");
@@ -383,7 +385,7 @@ SDL_Color gray = { 255, 255, 255, 255 };
 
 bspnode_t *BSPList (Storage *lines_i)
 {
-	id				frontlist_i, backlist_i;
+	Storage			*frontlist_i, *backlist_i;
 	int				i,c, step;
 	line_t			*line_p, *bestline_p;
 	int				v, bestv;
@@ -395,20 +397,20 @@ bspnode_t *BSPList (Storage *lines_i)
 //	gray = 1.0 - gray; ... wut
 	DrawLineStore (lines_i);
 	
-	node_p = malloc (sizeof(*node_p));
+	node_p = (bspnode_t *)malloc (sizeof(*node_p));
 	memset (node_p, 0, sizeof(*node_p));
 
 //
 // find the best line to partition on 
 //
-	c = [lines_i count];
+	c = lines_i->count();
 	bestv = INT_MAX;	
 	bestline_p = NULL;
 	step = (c/40)+1;		// set this to 1 for an exhaustive search
 research:
 	for (i=0 ; i<c ; i+=step)
 	{
-		line_p = [lines_i elementAt:i];
+		line_p = (line_t *)lines_i->elementAt(i);
 		v = EvaluateSplit (lines_i, line_p, bestv);
 		if (v<bestv)
 		{
@@ -440,17 +442,9 @@ research:
 //
 	DivlineFromWorldline (&node_p->divline, bestline_p);
 
-	frontlist_i =
-	[[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(line_t)
-		description:	NULL];
-	backlist_i =
-	[[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(line_t)
-		description:	NULL];
-		
+    frontlist_i = Storage::initCount(0, sizeof(line_t), "fontlist_i");
+    backlist_i  = Storage::initCount(0, sizeof(line_t), "backlist_i");
+
 	ExecuteSplit (lines_i, bestline_p, frontlist_i, backlist_i);
 
 //
@@ -472,7 +466,7 @@ research:
 =====================
 */
 
-id segstore_i;
+Storage *segstore_i;
 
 void MakeSegs (void)
 {
@@ -480,14 +474,10 @@ void MakeSegs (void)
 	worldline_t		*wl;
 	line_t			li;
 
-	segstore_i =
-	[[Storage alloc]
-		initCount:		0
-		elementSize:	sizeof(line_t)
-		description:	NULL];
-	
-	count = [linestore_i count];
-	wl = [linestore_i elementAt:0];
+    segstore_i = Storage::initCount(0, sizeof(line_t), "segstore_i");
+
+	count = linestore_i->count();
+	wl = (worldline_t *)linestore_i->elementAt(0);
 	for (i= 0 ; i<count ; i++, wl++)
 	{
 		li.p1 = wl->p1;
@@ -495,8 +485,8 @@ void MakeSegs (void)
 		li.linedef = i;
 		li.side = 0;
 		li.offset = 0;
-		li.grouped = NO;
-		[segstore_i addElement: &li];
+		li.grouped = false;
+		segstore_i->addElement(&li);
 		
 		if (wl->flags & ML_TWOSIDED)
 		{
@@ -505,8 +495,8 @@ void MakeSegs (void)
 			li.linedef = i;
 			li.side = 1;
 			li.offset = 0;
-			li.grouped = NO;
-			[segstore_i addElement: &li];
+			li.grouped = false;
+			segstore_i->addElement(&li);
 		}
 	}		
 }

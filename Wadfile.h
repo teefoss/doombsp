@@ -1,28 +1,30 @@
-#import <appkit/appkit.h>
+#ifndef WADFILE_H
+#define WADFILE_H
+
 #include "Storage.h"
 
-@interface Wadfile : NSObject
+struct Wadfile
 {
-	int		handle;
+	int		handle; // TODO: use FILE * for better portability
 	char    *pathname;
 	Storage *info;
-	BOOL	dirty;
-}
+	bool	dirty;
 
-- initFromFile: (char const *)path;
-- initNew: (char const *)path;
-- close;
-- (void)free;
+    static Wadfile *initFromFile(const char *path);
+    static Wadfile *initNew(const char *path);
+    void closeHandle();
+    void dealloc();
 
-- (int)numLumps;
-- (int)lumpsize: (int)lump;
-- (int)lumpstart: (int)lump;
-- (char const *)lumpname: (int)lump;
-- (int)lumpNamed: (char const *)name;
-- (void *)loadLump: (int)lump;
-- (void *)loadLumpNamed: (char const *)name;
+    int numLumps();
+    int lumpsize(int lump);
+    int lumpstart(int lump);
+    const char *lumpname(int lump);
+    int lumpNamed(const char *name);
+    void *loadLump(int lump);
+    void *loadLumpNamed(const char *name);
 
-- addName: (char const *)name data: (void *)data size: (int)size;
-- writeDirectory; 
+    void addName(const char *name, void *data, int size);
+    void writeDirectory();
+};
 
-@end
+#endif /* WADFILE_H */

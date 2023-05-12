@@ -1,6 +1,6 @@
 // saveconnect.m
 
-#import "doombsp.h"
+#include "doombsp.h"
 #include <SDL2/SDL.h>
 
 typedef struct
@@ -110,27 +110,25 @@ void DrawBBox (bbox_t *box)
     r.y = box->yl;
     r.w = box->xh - box->xl + 1;
     r.h = box->yh - box->yl + 1; // TF: other way round?
-    DrawRect (&r); // MARK: SDL
-    SDL_RenderPresent (renderer_i);
+    DrawRect (&r);
+    NXPing();
 }
 
 void DrawDivline (bdivline_t *li)
 {
-    // MARK: SDL
-    DrawLine (li->x, li->y, li->dx, li->dy);
-    SDL_RenderPresent (renderer_i);
-//	PSmoveto (li->x,li->y);
-//	PSrlineto (li->dx,li->dy);
-//	PSstroke ();
-//	NXPing ();
+    //    PSmoveto (li->x,li->y);
+    //    PSrlineto (li->dx,li->dy);
+    //    PSstroke ();
+
+    DrawLine (li->x, li->y, li->x + li->dx, li->y + li->dy);
+    NXPing ();
 }
 
 void DrawBChain (bchain_t *ch)
 {
 	int		i;
     int     x, y;
-    
-    // MARK: SDL
+
     x = ch->points->x;
     y = ch->points->y;
     for (i=1 ; i<ch->numpoints ; i++)
@@ -139,7 +137,8 @@ void DrawBChain (bchain_t *ch)
         x = ch->points[i].x;
         y = ch->points[i].y;
     }
-    SDL_RenderPresent (renderer_i);
+
+    NXPing();
 #if 0
 	PSmoveto (ch->points->x,ch->points->y);
 	for (i=1 ; i<ch->numpoints ; i++)
@@ -163,7 +162,7 @@ bbox_t		sweptarea;
 ====================
 */
 
-BOOL DoesChainBlock (bchain_t *chain)
+bool DoesChainBlock (bchain_t *chain)
 {
 /*
 
@@ -180,14 +179,14 @@ an end, the path is blocked
 
 	if (sweptarea.xl > chain->bounds.xh || sweptarea.xh < chain->bounds. xl ||
 	sweptarea.yl > chain->bounds. yh || sweptarea.yh < chain->bounds. yl)
-		return NO;
+		return false;
 		
 	startside = -1;		// not started yet
 	
 	for (p=0, pt=chain->points ; p<chain->numpoints ; p++, pt++)
 	{
 	// find side for pt
-#if 0
+#if 0 // TF: removed in original
 if (p>0)
 {
 	PSmoveto ((pt-1)->x, (pt-1)->y);
@@ -222,11 +221,11 @@ if (p>0)
 		}
 								
 	// opposite of startside
-		return YES;		// totally crossed area
+		return true;		// totally crossed area
 			
 	}
 
-	return NO;
+	return false;
 }
 
 /*
@@ -389,7 +388,7 @@ blocked:;
 
 void BuildBlockingChains (void)
 {
-	BOOL	        *used;
+	bool	        *used;
 	int			    i,j;
 	bpoint_t	    *temppoints, *pt_p;
 	bline_t	*li1,   *li2;
@@ -397,21 +396,18 @@ void BuildBlockingChains (void)
 	bchain_t	    bch;
 	int			    cx, cy;
 	
-	used = alloca (numblines*sizeof (*used));
+	used = (bool *)alloca (numblines*sizeof (*used));
 	memset (used,0,numblines*sizeof (*used));
-	temppoints = alloca (numblines*sizeof (*temppoints));
+	temppoints = (bpoint_t *)alloca (numblines*sizeof (*temppoints));
 	
-	chains_i = [[Storage alloc]
-					initCount:		0
-					elementSize:	sizeof(bchain_t)
-					description:	NULL];
+    chains_i = Storage::initCount(0, sizeof(bchain_t), "chains_i");
 
 	li1 = blines;
 	for (i=0 ; i<numblines ; i++, li1++)
 	{
 		if (used[i])
 			continue;
-		used[i] = YES;
+		used[i] = true;
 		
 		// start a new chain
 		pt_p = temppoints;
@@ -438,7 +434,7 @@ void BuildBlockingChains (void)
 				break;		// no more lines in chain
 				
 		// add to chain
-			used[j] = YES;
+			used[j] = true;
 			pt_p->x = cx = li2->p2.x;
 			pt_p->y = cy = li2->p2.y;
 			pt_p++;
@@ -447,14 +443,14 @@ void BuildBlockingChains (void)
 		
 // save the block chain
 		bch.numpoints = pt_p - temppoints;
-		bch.points = malloc (bch.numpoints*sizeof(*bch.points));
+		bch.points = (bpoint_t *)malloc (bch.numpoints*sizeof(*bch.points));
 		memcpy (bch.points, temppoints, bch.numpoints*sizeof(*bch.points));
-		[chains_i addElement: &bch];
+		chains_i->addElement(&bch);
 //DrawBChain (&bch);
 	}
 	
-	numbchains = [chains_i count];
-	bchains = [chains_i elementAt:0];
+	numbchains = chains_i->count();
+	bchains = (bchain_t *)chains_i->elementAt(0);
 }
 
 
@@ -478,22 +474,22 @@ void ProcessConnections (void)
 	bline_t			bline;
 	int			    sec;
 		
-	numsectors = [secstore_i count];
-	wlcount = [linestore_i count];
+	numsectors = secstore_i->count();
+	wlcount = linestore_i->count();
 
-	connections = malloc (numsectors*numsectors+8); // allow rounding to bytes
+	connections = (byte *)malloc (numsectors*numsectors+8); // allow rounding to bytes
 	memset (connections, 0, numsectors*numsectors);
 	
-	secboxes = secbox = malloc (numsectors*sizeof(bbox_t));
+	secboxes = secbox = (bbox_t *)malloc (numsectors*sizeof(bbox_t));
 	for (i=0 ; i<numsectors ; i++, secbox++)
 		ClearBBox (secbox);
 
 //			
 // calculate bounding boxes for all sectors
 //
-	count = [ldefstore_i count];
-	p = [ldefstore_i elementAt:0];
-	vt = [mapvertexstore_i elementAt:0];
+	count = ldefstore_i->count();
+	p = (maplinedef_t *)ldefstore_i->elementAt(0);
+	vt = (mapvertex_t *)mapvertexstore_i->elementAt(0);
 	for (i=0 ; i<count ; i++, p++)
 	{
 		for (s=0 ; s<1 ; s++)
@@ -501,7 +497,7 @@ void ProcessConnections (void)
 			if (p->sidenum[s] == -1)
 				continue;			// no back side
 			// add both points to sector bounding box
-			sd = (mapsidedef_t *)[sdefstore_i elementAt: p->sidenum[s]];
+			sd = (mapsidedef_t *)sdefstore_i->elementAt(p->sidenum[s]);
 			sec = sd->sector;
 			AddToBBox (&secboxes[sec], vt[p->v1].x, vt[p->v1].y);
 			AddToBBox (&secboxes[sec], vt[p->v2].x, vt[p->v2].y);
@@ -511,12 +507,9 @@ void ProcessConnections (void)
 //	
 // make a list of only the solid lines
 //
-	lines = [[Storage alloc]
-					initCount:		0
-					elementSize:	sizeof(bline)
-					description:	NULL];
-	
-	wl = [linestore_i elementAt: 0];
+    lines = Storage::initCount(0, sizeof(bline), "lines");
+
+	wl = (worldline_t *)linestore_i->elementAt(0);
 	for ( i=0 ; i<wlcount ; wl++,i++)
 	{
 		if (wl->flags & ML_TWOSIDED)
@@ -525,10 +518,10 @@ void ProcessConnections (void)
 		bline.p1.y = wl->p1.y;
 		bline.p2.x = wl->p2.x;
 		bline.p2.y = wl->p2.y;
-		[lines addElement: &bline];
+		lines->addElement(&bline);
 	}
-	blines = [lines elementAt: 0];
-	numblines = [lines count];
+	blines = (bline_t *)lines->elementAt(0);
+	numblines = lines->count();
 	
 //
 // build blocking chains
@@ -559,7 +552,7 @@ void OutputConnections (void)
 	
 	cons = connections;
 	bytes = (numsectors*numsectors+7)/8;
-	bits = malloc(bytes);
+	bits = (char *)malloc(bytes);
 	
 	for (i=0 ; i<bytes ; i++)
 	{
@@ -567,6 +560,6 @@ void OutputConnections (void)
 		cons +=8;
 	}
 	
-	[wad_i addName: "reject" data:bits size:bytes];
+	wad_i->addName("reject", bits, bytes);
 	printf ("reject: %i\n",bytes);	
 }
